@@ -2,8 +2,6 @@
 
 MemoryMatch is a modern, high-performance memory card game built with **Blazor WebAssembly** and styled with **Tailwind CSS**. It features a premium design inspired by shadcn UI, complete with 3D animations, a customizable game timer, and full PWA support.
 
-![MemoryMatch Logo](BlazorWasm.MemoryCardsGameV2/wwwroot/logo.svg)
-
 ## ✨ Key Features
 
 -   **Premium Aesthetics**: Red-branded theme with smooth 3D card flip animations and a clean, shadcn-inspired interface.
