@@ -1,33 +1,47 @@
 @page "/"
+@using System.Threading
 @inject ThemeService ThemeService
+@implements IDisposable
 
 <div class="flex flex-col items-center gap-8">
     <div class="flex w-full flex-col items-center justify-between gap-4 md:flex-row">
         <div class="space-y-1">
             <h1 class="text-3xl font-bold tracking-tight">Memory Match</h1>
-            <p class="text-muted-foreground">Find all matching pairs to win the game.</p>
+            <p class="text-muted-foreground text-sm">Find all pairs. Change timer below.</p>
         </div>
-        <div class="flex items-center gap-4">
-            <div class="flex flex-col items-center bg-card p-3 rounded-lg border shadow-sm min-w-[100px]">
-                <span class="text-xs text-muted-foreground uppercase font-semibold">Moves</span>
-                <span class="text-2xl font-bold">@moves</span>
+        <div class="flex items-center gap-2">
+            <div class="flex flex-col items-center bg-card p-2 rounded-lg border shadow-sm min-w-[80px] @(timerValue <= 10 && !gameWon && cards.Any() ? "text-destructive animate-pulse border-destructive/50" : "")">
+                <span class="text-[10px] text-muted-foreground uppercase font-semibold">Time</span>
+                <span class="text-xl font-bold">@timerValue<span class="text-sm ml-0.5">s</span></span>
             </div>
-            <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8" 
+            <div class="flex flex-col items-center bg-card p-2 rounded-lg border shadow-sm min-w-[80px]">
+                <span class="text-[10px] text-muted-foreground uppercase font-semibold">Moves</span>
+                <span class="text-xl font-bold">@moves</span>
+            </div>
+            <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6" 
                     @onclick="Generate" disabled="@isProcessing">
-                @(cards.Any() ? "Reset Game" : "Start Game")
+                @(cards.Any() ? "Reset" : "Start")
             </button>
         </div>
     </div>
 
     @if (gameWon)
     {
-        <div class="bg-primary/10 border border-primary/20 rounded-xl p-6 text-center animate-in fade-in zoom-in duration-300">
-            <h2 class="text-2xl font-bold text-primary mb-2">🎉 Congratulations!</h2>
-            <p>You completed the match in <span class="font-bold">@moves</span> moves.</p>
+        <div class="bg-primary/10 border border-primary/20 rounded-xl p-6 text-center animate-in fade-in zoom-in duration-300 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-primary mb-2">🎉 Victory!</h2>
+            <p>Matched all pairs in <span class="font-bold">@moves</span> moves with <span class="font-bold">@timerValue</span>s left.</p>
+        </div>
+    }
+    else if (gameOver)
+    {
+        <div class="bg-destructive/10 border border-destructive/20 rounded-xl p-6 text-center animate-in fade-in zoom-in duration-300 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-destructive mb-2">⏰ Time's Up!</h2>
+            <p>You ran out of time. Try again!</p>
+            <button class="mt-4 text-sm font-medium underline underline-offset-4 hover:text-destructive" @onclick="Generate">Try Again</button>
         </div>
     }
 
-    <div class="grid grid-cols-4 gap-4 w-full max-w-2xl sm:grid-cols-4 md:gap-6">
+    <div class="grid grid-cols-4 gap-3 w-full max-w-2xl sm:grid-cols-4 md:gap-4 @(gameOver ? "opacity-50 pointer-events-none" : "")">
         @foreach (var card in cards)
         {
             <div class="group relative aspect-square cursor-pointer perspective-1000" @onclick="() => FlipCard(card)">
@@ -43,6 +57,13 @@
                 </div>
             </div>
         }
+    </div>
+
+    <!-- Settings -->
+    <div class="flex items-center gap-4 bg-muted/50 p-4 rounded-xl border w-full max-w-md">
+        <label for="timer-input" class="text-sm font-medium">Timer (seconds):</label>
+        <input id="timer-input" type="number" @bind="initialTimerValue" class="flex h-9 w-20 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" min="5" max="300" />
+        <span class="text-xs text-muted-foreground">Default: 30s</span>
     </div>
 </div>
 
@@ -68,8 +89,14 @@
     private List<int> lstCardNo = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8 };
     private int moves = 0;
     private bool gameWon = false;
+    private bool gameOver = false;
     private bool isProcessing = false;
     private List<Card> selectedCards = new List<Card>();
+
+    // Timer fields
+    private int initialTimerValue = 30;
+    private int timerValue = 30;
+    private CancellationTokenSource? timerCts;
 
     protected override void OnInitialized()
     {
@@ -78,9 +105,12 @@
 
     async Task Generate()
     {
+        StopTimer();
         isProcessing = true;
         moves = 0;
         gameWon = false;
+        gameOver = false;
+        timerValue = initialTimerValue;
         selectedCards.Clear();
 
         // Initialize cards
@@ -113,12 +143,13 @@
         }
 
         isProcessing = false;
+        StartTimer();
         StateHasChanged();
     }
 
     async Task FlipCard(Card card)
     {
-        if (isProcessing || card.IsFlipped || card.IsMatched)
+        if (isProcessing || card.IsFlipped || card.IsMatched || gameOver || gameWon)
             return;
 
         isProcessing = true;
@@ -137,7 +168,11 @@
                 selectedCards[1].IsMatched = true;
 
                 // Check if game is won
-                gameWon = cards.All(c => c.IsMatched);
+                if (cards.All(c => c.IsMatched))
+                {
+                    gameWon = true;
+                    StopTimer();
+                }
             }
             else
             {
@@ -150,5 +185,46 @@
 
         isProcessing = false;
         StateHasChanged();
+    }
+
+    private void StartTimer()
+    {
+        StopTimer();
+        timerCts = new CancellationTokenSource();
+        _ = RunTimer(timerCts.Token);
+    }
+
+    private async Task RunTimer(CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested && timerValue > 0)
+            {
+                await Task.Delay(1000, token);
+                if (!token.IsCancellationRequested)
+                {
+                    timerValue--;
+                    if (timerValue <= 0)
+                    {
+                        gameOver = true;
+                        StopTimer();
+                    }
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+        }
+        catch (TaskCanceledException) { }
+    }
+
+    private void StopTimer()
+    {
+        timerCts?.Cancel();
+        timerCts?.Dispose();
+        timerCts = null;
+    }
+
+    public void Dispose()
+    {
+        StopTimer();
     }
 }
