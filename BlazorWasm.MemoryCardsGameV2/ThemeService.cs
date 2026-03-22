@@ -24,9 +24,9 @@ public class ThemeService
         }
         else
         {
-            // Optional: Default to system preference
-            // CurrentTheme = await IsSystemDark() ? "dark" : "light";
+            CurrentTheme = await _jsRuntime.InvokeAsync<string>("getSystemTheme");
         }
+        await ApplyThemeAsync();
     }
 
     public async Task ToggleThemeAsync()
@@ -39,13 +39,6 @@ public class ThemeService
 
     public async Task ApplyThemeAsync()
     {
-        if (CurrentTheme == "dark")
-        {
-            await _jsRuntime.InvokeVoidAsync("eval", "document.documentElement.classList.add('dark')");
-        }
-        else
-        {
-            await _jsRuntime.InvokeVoidAsync("eval", "document.documentElement.classList.remove('dark')");
-        }
+        await _jsRuntime.InvokeVoidAsync("setTheme", CurrentTheme);
     }
 }
