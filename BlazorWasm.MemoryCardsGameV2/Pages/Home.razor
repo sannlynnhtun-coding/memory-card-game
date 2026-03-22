@@ -6,8 +6,7 @@
 <div class="flex flex-col items-center gap-8">
     <div class="flex w-full flex-col items-center justify-between gap-4 md:flex-row">
         <div class="space-y-1">
-            <h1 class="text-3xl font-bold tracking-tight">Memory Match</h1>
-            <p class="text-muted-foreground text-sm">Find all pairs. Change timer below.</p>
+            <p class="text-muted-foreground text-sm">Find all pairs before time runs out! Match them as quickly as possible.</p>
         </div>
         <div class="flex items-center gap-2">
             <div class="flex flex-col items-center bg-card p-2 rounded-lg border shadow-sm min-w-[80px] @(timerValue <= 10 && !gameWon && cards.Any() ? "text-destructive animate-pulse border-destructive/50" : "")">
