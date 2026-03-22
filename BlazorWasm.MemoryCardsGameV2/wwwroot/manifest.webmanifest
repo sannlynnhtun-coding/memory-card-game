@@ -1,11 +1,11 @@
 {
-    "name": "Blazor Wasm - Memory Card Game v2",
-    "short_name": "Memory Card Game",
+    "name": "MemoryMatch - Memory Card Game",
+    "short_name": "MemoryMatch",
     "id": "./",
     "start_url": "./",
     "display": "standalone",
-    "background_color": "#6563FF",
-    "theme_color": "#03173d",
+    "background_color": "#ffffff",
+    "theme_color": "#dc2626",
     "prefer_related_applications": false,
     "icons": [
         {
