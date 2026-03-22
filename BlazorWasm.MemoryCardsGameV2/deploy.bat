@@ -8,6 +8,9 @@ REM ===========================
 REM Navigate to the project folder
 cd "D:\slh\proj\BlazorWasm.MemoryCardsGame\BlazorWasm.MemoryCardsGameV2"
 
+REM Compile Tailwind CSS
+call npm run build
+
 REM Build the project with custom output path
 dotnet publish -c Release
 

@@ -1,0 +1,16 @@
+{
+  "name": "blazorwasm.memorycardsgamev2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/style.css",
+    "watch": "npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/style.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}

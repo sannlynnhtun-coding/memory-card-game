@@ -1,26 +1,60 @@
-﻿@page "/"
+@page "/"
+@inject ThemeService ThemeService
 
-<button class="btn btn-success" @onclick="Generate" disabled="@isProcessing">Start Game</button>
-<ul class="cards">
-    @foreach (var card in cards)
-    {
-        <li class="card flip" @onclick="() => FlipCard(card)">
-            <div class="view front-view" style="@(card.IsFlipped || card.IsMatched ? "display:none" : "")">
-                <img src="images/que_icon.svg" alt="icon">
+<div class="flex flex-col items-center gap-8">
+    <div class="flex w-full flex-col items-center justify-between gap-4 md:flex-row">
+        <div class="space-y-1">
+            <h1 class="text-3xl font-bold tracking-tight">Memory Match</h1>
+            <p class="text-muted-foreground">Find all matching pairs to win the game.</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col items-center bg-card p-3 rounded-lg border shadow-sm min-w-[100px]">
+                <span class="text-xs text-muted-foreground uppercase font-semibold">Moves</span>
+                <span class="text-2xl font-bold">@moves</span>
             </div>
-            <div class="view back-view" style="@(card.IsFlipped || card.IsMatched ? "" : "display:none")">
-                <img src="images/img-@(card.Number).png" alt="card-img">
-            </div>
-        </li>
-    }
-</ul>
-<div>
-    <p>Moves: @moves</p>
+            <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8" 
+                    @onclick="Generate" disabled="@isProcessing">
+                @(cards.Any() ? "Reset Game" : "Start Game")
+            </button>
+        </div>
+    </div>
+
     @if (gameWon)
     {
-        <p>Congratulations! You won in @moves moves!</p>
+        <div class="bg-primary/10 border border-primary/20 rounded-xl p-6 text-center animate-in fade-in zoom-in duration-300">
+            <h2 class="text-2xl font-bold text-primary mb-2">🎉 Congratulations!</h2>
+            <p>You completed the match in <span class="font-bold">@moves</span> moves.</p>
+        </div>
     }
+
+    <div class="grid grid-cols-4 gap-4 w-full max-w-2xl sm:grid-cols-4 md:gap-6">
+        @foreach (var card in cards)
+        {
+            <div class="group relative aspect-square cursor-pointer perspective-1000" @onclick="() => FlipCard(card)">
+                <div class="relative h-full w-full transition-all duration-500 [transform-style:preserve-3d] @(card.IsFlipped || card.IsMatched ? "[transform:rotateY(180deg)]" : "")">
+                    <!-- Front (Hidden) -->
+                    <div class="absolute inset-0 flex items-center justify-center rounded-xl border bg-card shadow-sm [backface-visibility:hidden] hover:border-primary/50 transition-colors">
+                        <img src="images/que_icon.svg" alt="icon" class="w-1/3 opacity-50 grayscale">
+                    </div>
+                    <!-- Back (Revealed) -->
+                    <div class="absolute inset-0 flex items-center justify-center rounded-xl border bg-primary/5 shadow-inner [backface-visibility:hidden] [transform:rotateY(180deg)] @(card.IsMatched ? "border-primary bg-primary/10" : "border-primary/20")">
+                        <img src="images/img-@(card.Number).png" alt="card-img" class="w-2/3 object-contain @(card.IsMatched ? "animate-bounce" : "")">
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+<style>
+    .perspective-1000 {
+        perspective: 1000px;
+    }
+    [backface-visibility:hidden] {
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+</style>
 
 @code {
     public class Card
